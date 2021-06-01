@@ -1,2 +1,2 @@
-# SatQuMa_v1.0
+# SatQuMA_v1.0
 Modelling for different SatQKD systems
