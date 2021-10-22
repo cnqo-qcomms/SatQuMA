@@ -10,7 +10,9 @@ The 5 main protocol parameters can be either optimised or specified:
     mu1 = Intensity of signal 1
     mu2 = Intesnity of signal 2
 
-This version employs either the Chernoff or Hoeffding bound.
+This version employs either the Chernoff or Hoeffding tail bounds for finite
+block keys. It can also calculate the asymptotic key length (accumulated over
+an infinite number of identical satellite overpasses).
 
 This script is based on the Mathematica script SatQKD_finite_key.nb written by
 J. S. Sidhu and T. Brougham.
@@ -45,6 +47,7 @@ marked (1) and (2) below, where:
 import numpy as np
 from sys import exit
 from time import perf_counter, process_time
+from os.path import join
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -99,7 +102,6 @@ if (tOptimise):
         mu1_i = 0.8  # Intensity 1
         mu2_i = 0.3  # Intensity 2
 
-
 else:
     #**************************************************************************
     # Calculate the secure key length using specified values for the protocol 
@@ -124,9 +126,8 @@ else:
 # Input file options
 #******************************************************************************
 # Path to loss file  (empty = current directory)
-# If the path is not an empty string it should end with a delimiter.
-# E.g. loss_path = 'C:\\Users\\Name\\Directory\\'
-loss_path = '..\\'
+# E.g. loss_path = 'C:\\path\\to\\directory'
+loss_path = '..'
 # File containing loss data (for given xi value below)
 loss_file = 'FS_loss_XI0.csv'
 lc        = 3 # Column containing loss data in file (counting from 1)
@@ -134,30 +135,31 @@ lc        = 3 # Column containing loss data in file (counting from 1)
 #******************************************************************************
 # Fixed system parameters
 #******************************************************************************
-xi    = 0.0 # Angle between OGS zenith and satellite (from Earth's centre) [rad.]
+# Angle between receiver zenith and satellite (from Earth's centre)
+xi         = 0.0       # [rad.]
 #mu3 = 10**(-9) # Weak coherent pulse 3 intensity, mu_3
-mu3   = 0         # Intensity of pulse 3 (fixed)
+mu3        = 0         # Intensity of pulse 3 (fixed)
 # Prescribed errors in protocol correctness and secrecy
-eps_c = 10**(-15) # Correctness parameter
-eps_s = 10**(-9)  # Secrecy parameter
+eps_c      = 10**(-15) # Correctness parameter
+eps_s      = 10**(-9)  # Secrecy parameter
 # Intrinsic Quantum Bit Error Rate (QBER_I)
-QBERI_list = (0.001,0.003,0.005) # array or singleton
+QBERI_list = [0.001,0.003,0.005] # list, array, tuple or singleton
 # Extraneous count probability
-Pec_list   = (1e-8,1e-7,1e-6) # array or singleton
+Pec_list   = [1e-8,1e-7,1e-6] # list, array, tuple or singleton
 # Afterpulse probability
-Pap = 0.001       # After-pulse probability
+Pap        = 0.001     # After-pulse probability
 # Number of satellite passes
-NoPass = 1        # Number of satellite passes
+NoPass     = 1         # Number of satellite passes
 # Repetition rate of the source in Hz
-Rrate  = 1*10**(9) # Source rate (Hz)
+Rrate      = 1*10**(9) # Source rate (Hz)
 # Number of pulses sent in Hz
-Npulse = NoPass*Rrate
+Npulse     = NoPass*Rrate
 
 #******************************************************************************
 # Define (inclusive) range for looped parameters: dt and ls
 #******************************************************************************
 # Index for windowing time slot arrays, e.g. A(t)[t0-dt:t0+dt], with dt <= 346
-dt_range = np.array([30, 346, 10]) # Start, stop, step index (defualt)
+dt_range = np.array([200, 350, 10]) # Start, stop, step index (defualt)
 # Set a minimum elevation angle for transmission, this value will override
 # the values corresponding to dt_range[1] if necessary.
 min_elev    = 10.0 # Minimum elevation transmission angle (degs)
@@ -181,14 +183,15 @@ eta = eta_d * eta_transmitter
 # Output file options
 #******************************************************************************
 # Write output to CSV file?
-tWriteData = F_or_T[1] # False (0) or True (1)
+tFullData  = F_or_T[1] # False (0) or True (1)
 # Write out only max values of SKL for dt?
 tOptiData  = F_or_T[1] # False (0) or True (1)
+# Write out optimised values for each system in one file?
+tMultiOpt  = F_or_T[1] # False (0) or True (1)
 # Write out optimiser metrics for each (final) calculation?
 tMetrics   = F_or_T[1] # False (0) or True (1)
 # Path for output files (empty = current directory)
-# If the path is not an empty string it should end with the path delimiter.
-# E.g. outpath = 'C:\\Users\\Name\\Directory\\'
+# E.g. outpath = 'C:\\path\\to\\directory'
 outpath    = ''    
 # Basename for output file (excluding .csv)
 outbase    = "out"
@@ -278,7 +281,7 @@ else:
 # Read from a local file and skip first line and take data only from the 
 # specified column. The free space loss should be arranged in terms of time
 # slots, t.
-cvs = np.loadtxt(loss_path+loss_file, delimiter= ',', skiprows=1, 
+cvs = np.loadtxt(join(loss_path, loss_file), delimiter= ',', skiprows=1, 
                  usecols=(0, 1, lc-1,))
 
 # Free space loss in dB (to be converted to efficiency)
@@ -321,6 +324,10 @@ else:
 # Parameter checks
 #******************************************************************************
 #******************************************************************************
+# Flag that controls if any data files are to be written
+tWriteFiles = False
+if any([tFullData,tOptiData,tMultiOpt,tMetrics]):
+    tWriteFiles = True
 
 if tOptimise:
     # Sanity check on parameter bounds
@@ -341,8 +348,8 @@ dt_elev    = cvs[minElevpos,0] # Max value of dt less than, or equal to, the
 
 # Check dt_range is within bounds
 dt_max = int(0.5*(len(FSeff) - 1) - time0shift) # Maximum time window half-width
-dt_range[dt_range < 0] = 0             # All values must be positive
-dt_range[dt_range > dt_max] = dt_max   # Max cannot exceed No. of time-slots
+dt_range[dt_range < 0]       = 0       # All values must be positive
+dt_range[dt_range > dt_max]  = dt_max  # Max cannot exceed No. of time-slots
 dt_range[dt_range > dt_elev] = dt_elev # Limit range by minimum elevation value
 
 # Get minimum elevation for transmission (possibly greater than value specified)
@@ -1288,7 +1295,7 @@ def writeDataCSV(data,outpath,outfile,out_head=None,message='data'):
             print('Warning: No. of fields does not match number of headings in', 
                   'output file:',outfile+'.csv')
             print('No. fields =',data.shape[1],', No. headings =',nhead)
-    filename = outpath + outfile + '.csv'
+    filename = join(outpath, outfile + '.csv')
     print('Saving',message,'in file:',filename)
     np.savetxt(filename,data,delimiter=',',header=out_head) 
     return None
@@ -1648,8 +1655,8 @@ def key_length_inv(x):
     else:
         #return num_max  # ~1/0
         print("Error! Unexpected key length:", l)
-        return l        # Negative key length, NaN?
-
+        #return l        # Negative key length, NaN? --Useful for troubleshooting
+        return num_max  # ~1/0 --Stops calculations grinding to a halt
 
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -1696,7 +1703,7 @@ ci  = np.empty((4,),dtype=np.int16) # Array to count the various loops
 # Initialise output data storage and headers
 #******************************************************************************
 # Header for CSV file: Data columns
-header = "SysLoss,dt,SKL,QBER,phiX,nX,nZ,lambdaEC,sX0,sX1,vZ1,sZ1," + \
+header = "SysLoss,dt,SKL,QBERx,phiX,nX,nZ,lambdaEC,sX0,sX1,vZ1,sZ1," + \
          "mean photon no.,QBERI,Pec,Pap,NoPass,Rrate,eps_c,eps_s," + \
          "Px,P1,P2,P3,mu1,mu2,mu3,xi (deg),minElev (deg),maxElev (deg)," + \
          "shiftElev (deg)"
@@ -1721,6 +1728,10 @@ if (tOptimise):
         opt_head == ""
     # Initialise a data storage array for optimiser metrics
     optdata = np.empty((nls*ndt,len(opt_head.split(","))))
+    
+if tMultiOpt:
+    # Initialise a storage array for multi-system optimal data
+    multidata = np.empty((nls*npc*nqi,len(header.split(","))))
 
 #******************************************************************************
 # Print main calculation parameters
@@ -1931,8 +1942,7 @@ ci[0] = 0
 for Pec in Pec_list:
     ci[1] = 0
     for QBERI in QBERI_list:
-        print('System: '.format())
-        outfile = outbase + '_Pec_{0}_QBERI_{1}_{2}GHz'.format(ci[0],ci[1],Rrate/1.0e9)
+        outfile = outbase + '_Pec_{}_QBERI_{}_{}GHz'.format(ci[0],ci[1],Rrate/1.0e9)
         tc0 = perf_counter() # Start clock timer
         tp0 = process_time() # Start CPU timer
         if tOptimise:
@@ -1947,7 +1957,7 @@ for Pec in Pec_list:
                 for ls in range(ls_range[0],ls_range[1]+1,ls_range[2]):
                     ci[3] = 0
                     for dt in range(dt_range[0],dt_range[1]+1,dt_range[2]):
-                        print('Calculation {0}: Pec = {1:5.2e}, QBERI = {2:5.2e}, ls = {3}, dt = {4}'.format(
+                        print('Calculation {}: Pec = {:5.2e}, QBERI = {:5.2e}, ls = {}, dt = {}'.format(
                             count+1,Pec,QBERI,ls,int(dt)))
                         if (tPrint):
                             print('- '*10,'Optimise incl. EC',' -'*10)
@@ -1960,10 +1970,10 @@ for Pec in Pec_list:
                                 # Use the optimised parameters from the previous shift angle calculation
                                 # as the initial values for this calculation
                                 x0 = x0i[:,ci[0],ci[1],ci[2]-1,ci[3]]
-                            elif count > 0:
+                            elif ci[3] > 0:
                                 # Use the optimised parameters from the previous calculation
                                 # as the initial values for this calculation
-                                x0 = np.array([*fulldata[count-1,20:23],*fulldata[count-1,24:26]])
+                                x0 = x0i[:,ci[0],ci[1],ci[2],ci[3]-1]
                         # Calculate optimised SKL
                         res = minimize(key_length_inv,x0,args=(),method=method,
                                        jac=None,hess=None,hessp=None,bounds=bounds, 
@@ -2021,23 +2031,23 @@ for Pec in Pec_list:
                                 else:
                                     print('Nit  =', res.nfev) # Number of iterations
                         else:
-                            print("Optimiser status = {0}: {1}".format(res.status,
+                            print("Optimiser status = {}: {}".format(res.status,
                                                                        res.message))
                         # Check if optimised parameters satisfy the constraints
                         check_constraints(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],
                                           mu3)
                         if (tPrint):
                             print('Px   =',res.x[0])
-                            print('pk   = ({0}, {1}, {2})'.format(res.x[1],res.x[2],
+                            print('pk   = ({}, {}, {})'.format(res.x[1],res.x[2],
                                                                  1 - res.x[1]
                                                                  - res.x[2]))
-                            print('mu   = ({0}, {1}, {2})'.format(res.x[3],res.x[4],mu3))
-                            print('SKL  = {0:e}'.format(int(1.0 / res.fun)))
+                            print('mu   = ({}, {}, {})'.format(res.x[3],res.x[4],mu3))
+                            print('SKL  = {:e}'.format(int(1.0 / res.fun)))
                         # Get final parameters from standard key length function
                         SKL,QBERx,phi_x,nX,nZ,mX,lambdaEC,sX0,sX1,vz1,sZ1,mpn = \
                             key_length(res.x)
                         # Store calculation parameters
-                        fulldata[count,:] = [ls+sysLoss,dt,int(1.0 / res.fun),QBERx,
+                        fulldata[ci[2]*ndt + ci[3],:] = [ls+sysLoss,dt,int(1.0 / res.fun),QBERx,
                                              phi_x,nX,nZ,lambdaEC,sX0,sX1,vz1,sZ1,mpn,
                                              QBERI,Pec,Pap,NoPass,Rrate,eps_c,eps_s,
                                              res.x[0],res.x[1],res.x[2],1-res.x[1]
@@ -2045,7 +2055,7 @@ for Pec in Pec_list:
                                              np.degrees(xi),min_elev,max_elev,
                                              shift_elev0]
                         # Store optimiser metrics
-                        optdata[count,:] = getOptData(Nopt,Ntot,x0,res,method)
+                        optdata[ci[2]*ndt + ci[3],:] = getOptData(Nopt,Ntot,x0,res,method)
                         count += 1 # Increment calculation counter
                         if (tPrint):
                             print('- '*10,'Optimise excl. EC',' -'*10)
@@ -2064,7 +2074,7 @@ for Pec in Pec_list:
                         else:
                             #print('stat =', res.status)  # Optimisation status (int)
                             #print('mess =', res.message) # Optimisation message
-                            print("Optimiser status = {0}: {1}".format(res.status,
+                            print("Optimiser status = {}: {}".format(res.status,
                                                                        res.message))
                         errcorrFunc = funcEC # Turn on error correction
                         # Get final parameters from standard key length function
@@ -2075,14 +2085,14 @@ for Pec in Pec_list:
                                           mu3)
                         if (tPrint):
                             print('Px   =',res.x[0])
-                            print('pk   = ({0}, {1}, {2})'.format(res.x[1],res.x[2],
+                            print('pk   = ({}, {}, {})'.format(res.x[1],res.x[2],
                                                                  1 - res.x[1]
                                                                  - res.x[2]))
-                            print('mu   = ({0}, {1}, {2})'.format(res.x[3],res.x[4],
+                            print('mu   = ({}, {}, {})'.format(res.x[3],res.x[4],
                                                                  mu3))
                             print('SKL  =',max(int(1.0 / res.fun-lambdaEC),0),
                                   ' (',int(1.0 / res.fun),'-',int(lambdaEC),')')
-                            print('SKL  = {0:e} ({1:e} - {2:e})'.format(
+                            print('SKL  = {:e} ({:e} - {:e})'.format(
                                 max(int(1.0 / res.fun-lambdaEC),0),
                                 int(1.0 / res.fun),int(lambdaEC)))
                             print('-'*60,'\n')
@@ -2103,7 +2113,7 @@ for Pec in Pec_list:
                 for ls in range(ls_range[0],ls_range[1]+1,ls_range[2]):
                     ci[3] = 0
                     for dt in range(dt_range[0],dt_range[1]+1,dt_range[2]):
-                        print('Calculation {0}: Pec = {1:5.2e}, QBERI = {2:5.2e}, ls = {3}, dt = {4}'.format(
+                        print('Calculation {}: Pec = {:5.2e}, QBERI = {:5.2e}, ls = {}, dt = {}'.format(
                             count+1,Pec,QBERI,ls,int(dt)))
                         # Re-set initial parameters (if required)
                         if tInit:
@@ -2114,10 +2124,10 @@ for Pec in Pec_list:
                                 # Use the optimised parameters from the previous shift angle calculation
                                 # as the initial values for this calculation
                                 x0 = x0i[:,ci[0],ci[1],ci[2]-1,ci[3]]
-                            elif count > 0:
+                            elif ci[3] > 0:
                                 # Use the optimised parameters from the previous calculation
                                 # as the initial values for this calculation
-                                x0 = np.array([*fulldata[count-1,20:23],*fulldata[count-1,24:26]])
+                                x0 = x0i[:,ci[0],ci[1],ci[2],ci[3]-1]
                         # Calculate optimised SKL
                         res = minimize(key_length_inv,x0,args=(),method=method,
                                        jac=None,hess=None,hessp=None,bounds=bounds, 
@@ -2174,24 +2184,24 @@ for Pec in Pec_list:
                                 else:
                                     print('Nit  =', res.nfev) # Number of iterations
                         else:
-                            print("Optimiser status = {0}: {1}".format(res.status,
+                            print("Optimiser status = {}: {}".format(res.status,
                                                                        res.message))
                         # Check if optimised parameters satisfy the constraints
                         check_constraints(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],
                                           mu3)
                         if (tPrint):
                             print('Px   =',res.x[0])
-                            print('pk   = ({0}, {1}, {2})'.format(res.x[1],res.x[2],
+                            print('pk   = ({}, {}, {})'.format(res.x[1],res.x[2],
                                                                  1 - res.x[1] - 
                                                                  res.x[2]))
-                            print('mu   = ({0}, {1}, {2})'.format(res.x[3],res.x[4],mu3))
-                            print('SKL  = {0:e}'.format(int(1.0 / res.fun)))
+                            print('mu   = ({}, {}, {})'.format(res.x[3],res.x[4],mu3))
+                            print('SKL  = {:e}'.format(int(1.0 / res.fun)))
                             print('-'*60,'\n')
                         # Get final parameters from standard key length function
                         SKL,QBERx,phi_x,nX,nZ,mX,lambdaEC,sX0,sX1,vz1,sZ1,mpn = \
                             key_length(res.x)
                         # Store calculation parameters
-                        fulldata[count,:] = [ls+sysLoss,dt,int(1.0 / res.fun),QBERx,
+                        fulldata[ci[2]*ndt + ci[3],:] = [ls+sysLoss,dt,int(1.0 / res.fun),QBERx,
                                              phi_x,nX,nZ,lambdaEC,sX0,sX1,vz1,sZ1,mpn,
                                              QBERI,Pec,Pap,NoPass,Rrate,eps_c,eps_s,
                                              res.x[0],res.x[1],res.x[2],1-res.x[1]
@@ -2199,7 +2209,7 @@ for Pec in Pec_list:
                                              np.degrees(xi),min_elev,max_elev,
                                              shift_elev0]
                         # Store optimiser metrics
-                        optdata[count,:] = getOptData(Nopt,Ntot,x0,res,method)
+                        optdata[ci[2]*ndt + ci[3],:] = getOptData(Nopt,Ntot,x0,res,method)
                         # Store protocol parameters to initialise calculations
                         if np.isnan(int(1.0 / res.fun)) or np.isinf(int(1.0 / res.fun)):
                             x0i[:,ci[0],ci[1],ci[2],ci[3]] = x0_rand(mu3,xb,num_min)
@@ -2220,20 +2230,20 @@ for Pec in Pec_list:
             for ls in range(ls_range[0],ls_range[1]+1,ls_range[2]):
                 ci[3] = 0
                 for dt in range(dt_range[0],dt_range[1]+1,dt_range[2]):
-                    print('Calculation {0}: Pec = {1:5.2e}, QBERI = {2:5.2e}, ls = {3}, dt = {4}'.format(
+                    print('Calculation {}: Pec = {:5.2e}, QBERI = {:5.2e}, ls = {}, dt = {}'.format(
                             count+1,Pec,QBERI,ls,int(dt)))
                     # Calculate the secure key length for the specified parameters.
                     SKL,QBERx,phi_x,nX,nZ,mX,lambdaEC,sX0,sX1,vz1,sZ1,mpn = \
                         key_length(x0)
                     if (tPrint):
                         print('Px  =',x0[0])
-                        print('pk  = ({0}, {1}, {2})'.format(x0[1],x0[2],1 - x0[1] - 
+                        print('pk  = ({}, {}, {})'.format(x0[1],x0[2],1 - x0[1] - 
                                                              x0[2]))
-                        print('mu  = ({0}, {1}, {2})'.format(x0[3],x0[4],mu3))
-                        print('SKL = {0:e}'.format(int(SKL)))
+                        print('mu  = ({}, {}, {})'.format(x0[3],x0[4],mu3))
+                        print('SKL = {:e}'.format(int(SKL)))
                         print('-'*60,'\n')
                     # Store calculation parameters
-                    fulldata[count,:] = [ls+sysLoss,dt,SKL,QBERx,phi_x,
+                    fulldata[ci[2]*ndt + ci[3],:] = [ls+sysLoss,dt,SKL,QBERx,phi_x,
                                          nX,nZ,lambdaEC,sX0,sX1,vz1,sZ1,mpn,QBERI,
                                          Pec,Pap,NoPass,Rrate,eps_c,eps_s,x0[0],x0[1],
                                          x0[2],1-x0[1]-x0[2],x0[3],x0[4],mu3,
@@ -2261,11 +2271,12 @@ for Pec in Pec_list:
         # Sort and output data
         #******************************************************************************
         #******************************************************************************
-        if (tWriteData):
+        if (tWriteFiles):
             if tPrint:
-                print('-'*60,'\n')
-            # Write out data in CSV format
-            writeDataCSV(fulldata,outpath,outfile,header,'full loss & time data')
+                print('-'*60)
+            if tFullData:
+                # Write out full data in CSV format
+                writeDataCSV(fulldata,outpath,outfile,header,'full loss & time data')
             if (tOptiData and ndt > 1):
                 # Sort data by SKL per SysLoss
                 sortdata = sort_data(fulldata,header,['SKL','SysLoss'],[True,False])
@@ -2277,8 +2288,28 @@ for Pec in Pec_list:
                 #print(res.keys()) # Prints available outputs for the object res
                 writeDataCSV(optdata,outpath,outfile+'_metrics',opt_head,
                              'optimisation metrics')
+            if tMultiOpt:
+                if not (tOptiData and ndt > 1):
+                    # Sort data by SKL per SysLoss
+                    sortdata = sort_data(fulldata[:nls*ndt,:],header,['SKL','SysLoss'],[True,False])
+                # Store optimal dt data per Pec, and QBERI
+                cm0  = ci[0]*(nqi*nls) + ci[1]*(nls)
+                cm1  = cm0 + nls
+                multidata[cm0:cm1,:] = sortdata[::ndt,:]
+            if tPrint:
+                print('-'*60,'\n')
         ci[1] += 1 # QBERI loop counter
     ci[0] += 1 # Pec loop counter
+
+if tMultiOpt:
+    if tPrint:
+        print('-'*60)
+    # Filename for multi-optimal data
+    multifile = outbase + '_multi-Pec-QBERI_{}GHz'.format(Rrate/1.0e9)
+    # Write sorted data for all Pec and QBERIs
+    writeDataCSV(multidata[:cm1,:],outpath,multifile,header,'multi-system optimal data')
+    if tPrint:
+        print('-'*60,'\n')
                 
 tc11 = perf_counter() # Stop clock timer
 tp11 = process_time() # Stop CPU timer
