@@ -298,7 +298,7 @@ sysLoss = -10*(np.math.log10(FSeff[time0pos]) + np.math.log10(eta))
 
 # Maximum elevation angle (degs) of satellite pass
 #max_elev = np.degrees(cvs[time0pos,1])
-max_elev = time0elev
+max_elev = np.degrees(time0elev)
 
 # Keep elevation shift within bounds
 #shift_elev0 = min(90.0,max(0.0,shift_elev0))
