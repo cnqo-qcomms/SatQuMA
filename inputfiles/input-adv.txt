@@ -1,0 +1,47 @@
+#******************************************************************************
+# Advanced/additional parameters
+#******************************************************************************
+# Select the type of tail bounds to use for estimating statistical fluctuations
+# in the count statistics.
+#   'Chernoff'   = boundFunc[0] => Different upper and lower bound terms
+#   'Hoeffding'  = boundFunc[1] => Same upper and lower bound terms
+#   'Asymptotic' = boundFunc[2] => No tail bounds. This choice forces also 
+#                                  errcorrFunc = 'block' below.
+'Chernoff' # boundFunc = Select an option from the list above.
+
+#******************************************************************************
+# Select the method for estimating the number of bits sacrificed for error
+# correction, listed below in order of decreasing precision (increasing
+# smoothness).
+#   'logM'  = logM(nX, QBERx, eps_c) = errcorrOpts[0]
+#   'block' = 1.16 * nX * h(QBERx)   = errcorrOpts[1]
+#   'mXtot' = 1.16 * mXtot           = errcorrOpts[2]
+#   'None'  = 0                      = errcorrOpts[3]
+#******************************************************************************
+'logM'     # errcorrFunc = Select a method from the list above.
+
+#******************************************************************************
+# Set the error correction maximum efficiency factor
+#******************************************************************************
+1.16       # fEC = Error correction tail bound efficiency factor
+
+#******************************************************************************
+# Optimiser parameters
+#******************************************************************************
+1e-10      # num_zero = Numerical value to use when denominators are ~zero
+10         # NoptMin =  Minimum No. of optimisations to strive for
+1000       # NoptMax = Maximum No. of optimisations (not used)
+True       # tStopZero = Stop optimizing if the first NoptMin return SKL = 0?
+False      # tStopBetter = Stop after NoptMin optimizations if SKL improved?
+
+#******************************************************************************
+# opt_methods = ['COBYLA','SLSQP','trust-constr']
+#******************************************************************************
+'COBYLA'   # opt_method = Select a optimisation method
+
+#******************************************************************************
+# Optimiser options: minimize, method='COBYLA'
+#******************************************************************************
+1200       # Nmax = Max No. of iterations
+1.0e-12    # ctol = Constraint absolute tolerance.
+0.002      # rhobeg = Reasonable initial changes to the variables.
