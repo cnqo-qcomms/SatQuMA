@@ -1,0 +1,76 @@
+#******************************************************************************
+# Select security protocol
+#******************************************************************************
+'aBB84-WCP' # protocol = QKD security protocol. Only 'efficient-BB84' available.
+
+#******************************************************************************
+# Select SKL calculation type via tOptimise
+#******************************************************************************
+#    True:  Optimise over the main protocol parameter and provide intial value.
+#    False: Specify the main protocol parameter.
+#******************************************************************************
+False  # tOptimise
+
+#******************************************************************************
+# Protocol parameters
+#******************************************************************************
+0.7611     # PxA_i = Asymmetric polarisation probability (0:1)
+0.7501     # pk1_i = Probability Alice prepares intensity 1 (0:1)
+0.1749     # pk2_i = Probability Alice prepares intensity 2 (0:1)
+0.7921     # mu1_i = Intensity 1 (0:1]
+0.1707     # mu2_i = Intensity 2 (0:1]
+  
+#******************************************************************************
+# Fixed system parameters
+#******************************************************************************
+0.0        # mu3     = Weak coherent pulse 3 intensity
+1e-15      # eps_c   = Prescribed error in protocol correctness
+1e-9       # eps_s   = Prescribed error in protocol secrecy
+0.001      # Pap     = Afterpulse probability [0:1]
+1e8        # fs      = Repetition rate of the source in Hz
+1          # NoPass  = Number of satellite passes
+10.0       # minElev = Minimum elevation of orbit (deg)
+0.0        # shift0  = Angle to shift centre of transmission window (deg)
+
+#******************************************************************************
+# Define listed parameters: theta_max(xi), Pec and QBERI
+#******************************************************************************
+90.0        # theta_max = Max elevation of satellite orbit wrt receiver (deg)
+1e-8, 1e-7  # Pec    = Dark count probability [0:1]
+0.001, 0.05 # QBERI  = Intrinsic quantum bit error rate (QBER_I)
+
+#******************************************************************************
+# Define (inclusive) range for looped parameters: ls and dt
+#******************************************************************************
+
+#******************************************************************************
+# dt = Index for windowing time-slot arrays, e.g. A(t)[t0-dt:t0+dt]
+# In FS_loss_XI0.csv, 0 <= dt <= 346
+#******************************************************************************
+210, 220, 10 # dt_range = Start, stop, step index
+#******************************************************************************
+# ls = Excess system loss(es) in dB
+#******************************************************************************
+0.0, 1.0, 2   # ls_range = Start, stop, No. of steps
+
+#******************************************************************************
+# Loss options
+#******************************************************************************
+True  # tReadLoss = Read losses from a file?
+
+#******************************************************************************
+# Input file options
+#******************************************************************************
+''                # loss_path = Path to loss file (empty string = current directory).
+'FS_loss_XI0.csv' # loss_file = File containing loss data
+3                 # lc = Column containing loss data in file (counting from 1)
+
+#******************************************************************************
+# Output file options
+#******************************************************************************
+True  # tPrint     = Print values to StdOut during calculations? True or False?
+True  # tFullData  = Write output to CSV file(s)? True or False?
+True  # tdtOptData = Write out all dt optimised data in a single file? True or False?
+True  # tMetrics   = Write out optimiser metrics? True or False?
+''    # out_path   = Path for output file (empty string = current directory)
+'out' # outbase    = Basename for output file(s) (excluding .csv)

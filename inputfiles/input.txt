@@ -1,0 +1,85 @@
+#******************************************************************************
+# Select security protocol
+#******************************************************************************
+'aBB84-WCP' # protocol = QKD security protocol. Only 'efficient-BB84' available.
+
+#******************************************************************************
+# Select SKL calculation type via tOptimise
+#******************************************************************************
+#    True:  Optimise over the main protocol parameter and provide intial value.
+#    False: Specify the main protocol parameter.
+#******************************************************************************
+True  # tOptimise
+
+#******************************************************************************
+# Initialise protocol parameters
+#******************************************************************************
+#     tOptimise = True: lower bound, upper bound [, initial value]
+#     tOptimise = False: value
+#******************************************************************************
+0.3, 1.0, 0.5     # PxA_i = Asymmetric polarisation probability (0:1)
+0.6, 0.9999, 0.7  # pk1_i = Probability Alice prepares intensity 1 (0:1)
+0.0, 0.4, 0.1     # pk2_i = Probability Alice prepares intensity 2 (0:1)
+0.3, 1.0, 0.8     # mu1_i = Intensity 1 (0:1]
+0.1, 0.5, 0.3     # mu2_i = Intensity 2 (0:1]
+  
+#******************************************************************************
+# Fixed system parameters
+#******************************************************************************
+0.0        # mu3     = Weak coherent pulse 3 intensity
+1e-15      # eps_c   = Prescribed error in protocol correctness
+1e-9       # eps_s   = Prescribed error in protocol secrecy
+0.001      # Pap     = Afterpulse probability [0:1]
+5e8        # fs      = Repetition rate of the source in Hz
+1          # NoPass  = Number of satellite passes
+10.0       # minElev = Minimum elevation of orbit (deg)
+0.0        # shift0  = Angle to shift centre of transmission window (deg)
+
+#******************************************************************************
+# Define listed parameters: theta_max(xi), Pec and QBERI
+#******************************************************************************
+90.0, 80.0 # theta_max = Max elevation of satellite orbit wrt receiver (deg)
+1e-8, 1e-7 # Pec       = Dark count probability [0:1]
+0.001      # QBERI   = Intrinsic quantum bit error rate (QBER_I)
+
+#******************************************************************************
+# Define (inclusive) range for looped parameters: ls and dt
+#******************************************************************************
+#******************************************************************************
+# dt = Index for windowing time-slot arrays, e.g. A(t)[t0-dt:t0+dt]
+# In FS_loss_XI0.csv, 0 <= dt <= 346
+#******************************************************************************
+200, 350, 10 # dt_range = Start, stop, step index
+#******************************************************************************
+# ls = Excess system loss(es) in dB
+#******************************************************************************
+0, 12, 7   # ls_range = Start, stop, No. of steps
+
+#******************************************************************************
+# Loss options
+#******************************************************************************
+False  # tReadLoss = Read losses from a file?
+
+#******************************************************************************
+# Input file options
+#******************************************************************************
+True     # tWriteLoss = Write losses to a file?
+''       # atmfile = Name of atmospheric data file ('' = use default data)
+15       # eta_int = Intrinsic system loss
+500e3    # hsat = Satellite altitude in m
+0e3      # hOGS = Receiver altitude in m
+0.15     # aT = Transmitter aperture radii (m)
+0.6      # aR = Receiver aperture radii (m)
+0.15     # w0 = Beam waist at focus (m)
+810      # wl = Wavelength (nm)
+6371e3   # R_E = Radius of the Earth (m)
+
+#******************************************************************************
+# Output file options
+#******************************************************************************
+True  # tPrint     = Print values to StdOut during calculations? True or False?
+True  # tFullData  = Write output to CSV file(s)? True or False?
+True  # tdtOptData = Write out all dt optimised data in a single file? True or False?
+True  # tMetrics   = Write out optimiser metrics? True or False?
+''    # out_path   = Path for output file (empty string = current directory)
+'out' # outbase    = Basename for output file(s) (excluding .csv)
