@@ -67,7 +67,7 @@ F_or_T = [False, True] # List used to switch between False or True values
 #    True:  Optimise over the main protocol parameters.
 #    False: Specify the main protocol parameters.
 #******************************************************************************
-tOptimise = F_or_T[1]  # False (0) or True (1)
+tOptimise = F_or_T[0]  # False (0) or True (1)
 
 if (tOptimise):
     #**************************************************************************
@@ -127,7 +127,7 @@ else:
 #******************************************************************************
 # Path to loss file  (empty = current directory)
 # E.g. loss_path = 'C:\\path\\to\\directory'
-loss_path = '..'
+loss_path = ''
 # File containing loss data (for given xi value below)
 loss_file = 'FS_loss_XI0.csv'
 lc        = 3 # Column containing loss data in file (counting from 1)
@@ -1608,7 +1608,7 @@ def key_length(x, *args):
              6*np.math.log(21.0 / eps_s, 2) - np.math.log(2.0 / eps_c, 2)) * 
              heaviside(mu[0] - mu[1] - mu[2]) * heaviside(P[2]), 0.0)
         l = l / NoPass # Normalise by the number of satellite passes used
-
+        
     return l, QBERx, phi_x, nX, nZ, mXtot, lambdaEC, sx0, sx1, vz1, sz1, mpn
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

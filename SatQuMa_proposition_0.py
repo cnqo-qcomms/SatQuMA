@@ -234,26 +234,26 @@ class Key_Rate_Calculator():
         return secret_key_length
     
 
-# import matplotlib.pyplot as plt
-# from collections import defaultdict
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
-# krc = Key_Rate_Calculator(channel_efficiency = 0.000194,
-#                           number_of_pulses = 1e9,
-#                           secrecy_error = 1e-9,
-#                           correctness_error = 1e-15,
-#                           average_observed_error_rate_in_x = 10,
-#                           error_correction_efficiency = 1.16,
-#                           intensity_1 = 0.7921,
-#                           intensity_2 = 0.1707,
-#                           intensity_3 = 0,
-#                           intensisty_1_selection_probability = 0.7501,
-#                           intensisty_2_selection_probability = 0.1749,
-#                           x_basis_selection_probability = 0.7611,
-#                           receiver_efficiency = 1.0, 
-#                           dark_count_probability = 1.00e-08, 
-#                           after_pulse_probability = 0.001,
-#                           error_rate_due_to_optical_errors = 0.001)
-# print(krc.get_secret_key_length())
+krc = Key_Rate_Calculator(channel_efficiency = 0.000194,
+                          number_of_pulses = 1e9,
+                          secrecy_error = 1e-9,
+                          correctness_error = 1e-15,
+                          average_observed_error_rate_in_x = 10,
+                          error_correction_efficiency = 1.16,
+                          intensity_1 = 0.7921,
+                          intensity_2 = 0.1707,
+                          intensity_3 = 0,
+                          intensisty_1_selection_probability = 0.7501,
+                          intensisty_2_selection_probability = 0.1749,
+                          x_basis_selection_probability = 0.7611,
+                          receiver_efficiency = 1.0, 
+                          dark_count_probability = 1.00e-08, 
+                          after_pulse_probability = 0.001,
+                          error_rate_due_to_optical_errors = 0.001)
+krc.get_secret_key_length()
         
 # x = defaultdict(list) 
 # y = defaultdict(list) 
