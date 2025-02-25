@@ -7,6 +7,7 @@ Created on Fri Jan 21 14:54:00 2022
 
 from sys import float_info
 
+import math
 import numpy as np
 from scipy.optimize import minimize
 
@@ -780,12 +781,12 @@ def SKL_main_loop(main_params,adv_params,x,x0i,xb,ci,ni,f_atm,bounds,cons,
 
         # Nominal system loss: based on zenith coupling efficiency and nominal losses
         # if xi == 0.0:
-        #     sysLoss = -10*(np.math.log10(FSeff[time0pos]) + np.math.log10(eta))
+        #     sysLoss = -10*(math.log10(FSeff[time0pos]) + math.log10(eta))
         # else:
         #     slm     = eta_loss_metric(hsat,h0,wvl,aT,aR,w0,f_atm,eta_int)
-        #     sysLoss = slm - 10*np.math.log10(eta)
-        sysLoss = -10*(np.math.log10(FSeff[time0pos]) + 
-                       np.math.log10(main_params['fixed']['eta']))
+        #     sysLoss = slm - 10*math.log10(eta)
+        sysLoss = -10*(math.log10(FSeff[time0pos]) + 
+                       math.log10(main_params['fixed']['eta']))
 
         # Maximum elevation angle (degs) of satellite pass
         #max_elev = np.degrees(cvs[time0pos,1])
