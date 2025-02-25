@@ -5,7 +5,7 @@ Created on Tue May  2 15:45:03 2023
 @author: Duncan McArthur
 """
 
-import numpy as np
+import math
 
 __all__ = ['gamma','h','heaviside']
 
@@ -27,7 +27,7 @@ def h(x):
         Binary entropy.
 
     """
-    h = -x*np.math.log(x, 2) - (1 - x)*np.math.log(1 - x, 2)
+    h = -x*math.log(x, 2) - (1 - x)*math.log(1 - x, 2)
     return h
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -54,9 +54,9 @@ def gamma(a,b,c,d):
         Output value.
 
     """
-    g1 = max((c + d) * (1 - b) * b / (c*d * np.math.log(2)), 0.0)
+    g1 = max((c + d) * (1 - b) * b / (c*d * math.log(2)), 0.0)
     g2 = max((c + d) * 21**2 / (c*d * (1 - b) * b*a**2), 1.0)
-    g  = np.math.sqrt(g1 * np.math.log(g2, 2))
+    g  = math.sqrt(g1 * math.log(g2, 2))
     return g
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
