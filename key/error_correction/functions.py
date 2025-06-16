@@ -5,6 +5,7 @@ Created on Tue May  2 10:15:35 2023
 @author: Duncan McArthur
 """
 
+import math
 import numpy as np
 from scipy.stats import binom
 
@@ -61,8 +62,8 @@ def logM(nX, QBERx, eps_c):
 
     """
     lM = nX * h(QBERx) + (nX * (1.0 - QBERx) - FInv(int(nX), QBERx, eps_c) - \
-                          1) * np.math.log((1.0 - QBERx) / QBERx) - \
-        0.5*np.math.log(nX) - np.math.log(1.0 / eps_c)
+                          1) * math.log((1.0 - QBERx) / QBERx) - \
+        0.5*math.log(nX) - math.log(1.0 / eps_c)
     return lM
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
