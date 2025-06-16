@@ -5,6 +5,7 @@ Created on Wed Dec 15 01:56:35 2021
 @author: Duncan McArthur
 """
 
+import math
 import numpy as np
 
 __all__ = ['DRate_j','error_j','nxz','mXZ','mxz','nXZpm','nXZpm_HB','nXZpm_inf',
@@ -181,7 +182,7 @@ def nXZpm(mu,P,nxz_mu,eps_s):
         sifted X/Z basis.
 
     """
-    log_21es = np.math.log(21.0 / eps_s)
+    log_21es = math.log(21.0 / eps_s)
     term_m   = 0.5*log_21es + np.sqrt(2*nxz_mu*log_21es + 0.25*log_21es**2)
     term_p   = log_21es + np.sqrt(2*nxz_mu*log_21es + log_21es**2)
 
@@ -221,7 +222,7 @@ def nXZpm_HB(mu,P,nxz_mu,nXZ,eps_s):
         sifted X/Z basis.
 
     """
-    term2   = np.sqrt(0.5*nXZ * np.math.log(21.0 / eps_s))
+    term2   = np.sqrt(0.5*nXZ * math.log(21.0 / eps_s))
     nXZmin  = np.divide(np.multiply(np.exp(mu), nxz_mu - term2), P)
     nXZplus = np.divide(np.multiply(np.exp(mu), nxz_mu + term2), P)
     return nXZmin, nXZplus
@@ -282,8 +283,8 @@ def tau(n,mu,P):
         exit(1)
     tau = 0
     for jj in range(len(mu)):
-        tau += np.math.exp(-mu[jj]) * mu[jj]**n * P[jj]
-    tau = tau / np.math.factorial(n)
+        tau += math.exp(-mu[jj]) * mu[jj]**n * P[jj]
+    tau = tau / math.factorial(n)
     return tau
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -384,7 +385,7 @@ def mXZpm(mu,P,mXZj,eps_s):
         sifted X/Z basis.
 
     """
-    log_21es = np.math.log(21.0 / eps_s)
+    log_21es = math.log(21.0 / eps_s)
     term_m  = 0.5*log_21es + np.sqrt(2*mXZj*log_21es + 0.25*log_21es**2)
     term_p  = log_21es + np.sqrt(2*mXZj*log_21es + log_21es**2)
 
