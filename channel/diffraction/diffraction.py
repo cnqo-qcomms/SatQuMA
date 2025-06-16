@@ -8,6 +8,7 @@ Created on Wed Dec 15 00:14:35 2021
 from scipy.integrate import quad
 from scipy.special import j0
 import numpy as np
+import math
 
 __all__ = ['diffract']
 
@@ -30,7 +31,7 @@ def GaussianMode(r,w0):
         Gaussian amplitude.
 
     """
-    return np.math.sqrt(2/np.pi) * np.exp(-(r/w0)**2) / w0
+    return math.sqrt(2/np.pi) * np.exp(-(r/w0)**2) / w0
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
