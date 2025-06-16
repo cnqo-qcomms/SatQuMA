@@ -11,6 +11,7 @@ num_min = float_info.epsilon # round (relative error due to rounding)
 # Extract the largest float that the current system can represent
 num_max = float_info.max
 
+import math
 import numpy as np
 
 from ..maths import (h, heaviside, gamma)
@@ -410,7 +411,7 @@ def key_length(x, args):
         phi_x = min(ratio + gamma(eps_s,ratio,sz1,sx1), 0.5)
         # Secret key length in the finite regime
         l = max((sx0 + sx1 * (1 - h(phi_x)) - lambdaEC -
-             6*np.math.log(21.0 / eps_s, 2) - np.math.log(2.0 / eps_c, 2)) * 
+             6*math.log(21.0 / eps_s, 2) - math.log(2.0 / eps_c, 2)) * 
              heaviside(mu[0] - mu[1] - mu[2]) * heaviside(P[2]), 0.0)
         l = l / NoPass # Normalise by the number of satellite passes used
 
